@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+  # Versión de la Rest API como proyecto monolítico
+  monolitico:
+    build: ./monolitico
+    # Dependencia
+    depends_on:
+      - db_monolitico
+    # Variables de entorno para el servicio monolítico
+    environment:
+      # Puerto
+      - PORT=3000
+      # Conexión a la base de datos en el contenedor
+      - MONGODB_CNN=mongodb://db_monolitico:27017/test
+  # Base de datos para el servicio monolítico
+  db_monolitico:
+    image: mongo:4.4.6
+
+  # Versión de la Rest API como microservicio para las demás rutas
+  otras:
+    build: ./microservicios/otras
+    # Dependencia
+    depends_on:
+      - db_otras
+    # Variables de entorno para el microservicio de las demás rutas
+    environment:
+      # Puerto
+      - PORT=3000
+      # Conexión a la base de datos en el contenedor
+      - MONGODB_CNN=mongodb://db_otras:27017/test
+  # Base de datos para las demás rutas como microservicio
+  db_otras:
+    image: mongo:4.4.6
+
+  # Versión de la Rest API como microservicio para la ruta de los usuarios
+  usuarios:
+    build: ./microservicios/usuarios
+    # Dependencia
+    depends_on:
+      - db_usuarios
+    # Variables de entorno para el microservicio de los usuarios
+    environment:
+      # Puerto
+      - PORT=3000
+      # Conexión a la base de datos en el contenedor
+      - MONGODB_CNN=mongodb://db_usuarios:27017/test
+  # Base de datos para la ruta usuarios como microservicio
+  db_usuarios:
+    image: mongo:4.4.6
+
+  # Servidor web/proxy para el enrutamiento en el puerto 8080
+  nginx:
+    image: nginx:latest
+    # Puertos
+    ports: ["8080:8080"]
+    # Configuración
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    # Dependencias
+    depends_on:
+      - otras
+      - usuarios
